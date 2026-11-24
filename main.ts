@@ -16,7 +16,7 @@ const LINE =
 // (4) No padding, no throat-clearing: every clause earns its place.
 // (5) Shippable in a real product's error dialog: teasing, not embarrassing.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 if (LINE.length < 1 || LINE.length > 200) {
   throw new Error(`entry line must be 1-200 characters, got ${LINE.length}`);
@@ -27,3 +27,13 @@ if (LINE.includes("\n") || LINE.includes("\r")) {
 
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", LINE, "utf8");
+
+// Read-back verification: confirm what landed on disk is byte-identical
+// to the line we intended to ship. A silent truncation, encoding slip, or
+// stray newline would otherwise pass unnoticed.
+const written = readFileSync("/output/entry.txt", "utf8");
+if (written !== LINE) {
+  throw new Error(
+    `read-back mismatch: wrote ${LINE.length} chars, read back ${written.length} chars`,
+  );
+}
